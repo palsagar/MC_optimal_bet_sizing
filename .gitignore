@@ -1,5 +1,6 @@
 # python notebook checkpoints
 .ipynb_checkpoints
+test.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
