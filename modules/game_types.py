@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 import matplotlib.pyplot as plt
-from typing import Callable , List
+from typing import Callable
+from abc import ABC, abstractmethod
 
 class PriceData:
     def __init__(self, instrument :str, start_date:str, end_date:str, re_sample:str="W-THU") -> None:
@@ -38,8 +39,6 @@ class PriceData:
         fig.tight_layout();  
         return None
 
-
-from abc import ABC, abstractmethod
 
 class GenericGame(ABC):
     def __init__(self) -> None:
