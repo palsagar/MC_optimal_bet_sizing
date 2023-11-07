@@ -1,71 +1,18 @@
 import numpy as np
-import pandas as pd
-import yfinance as yf
 import matplotlib.pyplot as plt
-from typing import Callable 
-
-class PriceData:
-    def __init__(self, instrument :str, start_date:str, end_date:str, re_sample:str="W-THU") -> None:
-        self._data = self.fetch_and_clean_data(instrument, start_date, end_date, re_sample)
-        self._close = self._data['Close'].copy()
-        self._changes = self._data['changes'].copy()
-
-    def fetch_and_clean_data(self, ins:str, start:str, end:str, re_sample:str) -> pd.DataFrame:
-        df = yf.download(ins, start=start, end=end) ; 
-        df = df.drop(["Open", "High", "Low", "Adj Close", "Volume"],axis=1)
-        df = df.resample(re_sample).last()
-        df['changes'] = df['Close'] / df['Close'].shift(1)
-        clean_data = df.dropna()
-        return clean_data
-
-    @property
-    def data(self) -> pd.DataFrame:
-        return self._data
-
-    @property
-    def price_changes(self) -> pd.Series:
-        return self._changes
-
-    # add hurst coefficient property, other autocorrelation properties to evaluate distance from random walk
-
-    def plot(self, width:float=12 , height:float=5) -> None:
-        plt.style.use('ggplot');
-        fig , ax = plt.subplots(2,1,figsize=(width,height), sharex=True);
-        ax[0].plot(self._close.index, self._close.values)
-        ax[0].set_ylabel('Closing Price History')
-        ax[1].plot(self._changes.index, self._changes.values)
-        ax[1].set_ylabel('Price Return History')
-        fig.tight_layout();  
-        return None
-
+from typing import Callable
+from game_types import GenericGame
 
 class MonteCarloSimulator:
     
-    def __init__(self, time_series:PriceData , nbins:int=25) -> None:
-        self._ts = time_series.price_changes 
-        self._retn_space , self._prob_space = self.compute_return_and_prob_space(nbins)
+    def __init__(self, game:GenericGame) -> None:
+        self._game = game 
+        self._prob_space , self._retn_space = self.initialize_game()
         self.simulated_paths = None
         self.final_returns = None
 
-    def compute_return_and_prob_space(self, nbins) -> tuple[np.ndarray]:
-        return_freqs , edges = np.histogram(self._ts.values, bins=nbins)
-        bin_centroids = 0.5*(edges[1:] + edges[:-1])
-        return_space = bin_centroids[(return_freqs > 0.)]
-        prob_space = (return_freqs[(return_freqs > 0.)]).astype(float)
-        prob_space /= np.sum(prob_space)
-        
-        return return_space , prob_space
-
-    def __repr__(self) -> str:
-        return f"{self._ts.info()}"
-
-    @property
-    def original_ts(self):
-        return self._ts
-
-    @property
-    def ts_returns_probs(self):
-        return np.vstack([self._retn_space, self._prob_space]).T
+    def initialize_game(self):
+        return self._game.game_setup 
 
     def compute_std_return(self) -> float:
         return np.std(self.final_returns)
